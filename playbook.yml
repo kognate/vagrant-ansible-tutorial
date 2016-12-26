@@ -1,0 +1,48 @@
+---
+- hosts: all
+  remote_user: ubuntu
+  become: True
+  gather_facts: False
+  tasks:
+    - raw: apt-get install -y python-minimal    
+- hosts: all
+  remote_user: ubuntu
+  become: True
+  tasks:
+    - apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Install list of packages
+      action: apt pkg={{item}} state=installed
+      with_items:
+        - git-core
+        - emacs24-nox
+        - postgresql
+        - libpq-dev
+        - python-psycopg2
+    - user:
+        name: myaccount
+        comment: "The Users Name"
+        uid: 1040
+        group: admin
+    - copy:
+        src: README.md
+        dest: /etc/README.copied
+        owner: myaccount
+        group: admin
+        mode: "u+rw,g-wx,o-rwx"
+- hosts: all
+  remote_user: ubuntu
+  become: True
+  become_user: postgres
+  tasks:
+    - postgresql_db:
+        name: example_db
+        encoding: UTF-8
+    - postgresql_user:
+        encrypted: True
+        password: md50fff5ee827dc614b80e7d7c1de75de42
+        db: example_db
+        name: edbadmin
+        priv: ALL
+        
